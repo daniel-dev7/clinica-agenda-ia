@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clínica Agenda IA - Leitura de Receitas e Pedidos Médicos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .input-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .textarea-wrapper {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .result-header h2 {
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .tipo-badge {
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .tipo-badge.receita {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .tipo-badge.exame {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .result-content {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #555;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .example-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #ddd;
+        }
+
+        .example-section h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .example-btn {
+            background: #f0f0f0;
+            color: #333;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .alert-box {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .alert-box.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .alert-box.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            textarea {
+                min-height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Clínica Agenda IA</h1>
+            <p>Leitura inteligente de receitas e pedidos médicos</p>
+        </div>
+
+        <div class="card input-section">
+            <h2>📝 Cole o texto da receita ou pedido médico</h2>
+
+            <div class="textarea-wrapper">
+                <textarea id="inputText" placeholder="Cole aqui o texto extraído da receita ou pedido médico...&#10;&#10;Exemplos:&#10;- Lista de medicamentos com dosagens&#10;- Pedido de exames laboratoriais&#10;- Receituário médico&#10;- Solicitação de exames de imagem"></textarea>
+            </div>
+
+            <div class="example-section">
+                <h3>Exemplos rápida (clique para testar):</h3>
+                <button class="example-btn" onclick="loadExample('receita')">📋 Receita Simples</button>
+                <button class="example-btn" onclick="loadExample('exame')">🔬 Pedido de Exame</button>
+                <button class="example-btn" onclick="loadExample('completo')">📄 Receita Completa</button>
+            </div>
+
+            <button class="btn" id="processBtn" onclick="processarTexto()">
+                Analisar Documento
+            </button>
+
+            <div class="alert-box info">
+                <strong>ℹ️ Lembre-se:</strong> Esta ferramenta é um auxiliar de leitura. Sempre confirme as informações diretamente com o paciente ou profissional de saúde.
+            </div>
+        </div>
+
+        <div class="card loading" id="loadingSection">
+            <div class="spinner"></div>
+            <p>Processando documento médico...</p>
+        </div>
+
+        <div class="card result-section" id="resultSection">
+            <div class="result-header">
+                <h2>📊 Resultado da Análise</h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <span class="tipo-badge" id="tipoBadge"></span>
+                    <button class="copy-btn" onclick="copiarResultado()">📋 Copiar</button>
+                </div>
+            </div>
+
+            <div class="result-content" id="resultContent"></div>
+
+            <div class="alert-box warning" id="warningBox" style="display: none;">
+                <strong>⚠️ Atenção:</strong> Verifique os itens marcados como incertos antes de prosseguir.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Clínica Agenda IA - Ferramenta de apoio à leitura de documentos médicos</p>
+            <p>Não fornece diagnósticos • Sempre confirme informações com profissionais de saúde</p>
+        </div>
+    </div>
+
+    <script>
+        const examples = {
+            receita: `Receita Médica
+Paciente: João Silva
+Medicamentos:
+
+1. Losartana 50mg - tomar 1 comprimido pela manhã
+2. Omeprazol 20mg - tomar 1 comprimido antes do café da manhã
+3. Sinvastatina 20mg - tomar 1 comprimido à noite
+4. Dorflex - tomar 1 comprimido se dor`,
+
+            exame: `Pedido de Exame
+Paciente: Maria Santos
+
+Exames solicitados:
+1. Hemograma completo
+2. Glicemia de jejum
+3. Colesterol total e frações
+4. Triglicerídeos
+5. Creatinina
+6. TSH
+7. Urina tipo I
+8. Ultrassonografia abdominal total`,
+
+            completo: `RECEITA MÉDICA
+Dr. Roberto Carlos - CRM/SP 123456
+
+Paciente: Ana Paula Ferreira
+Data: 10/04/2026
+
+MEDICAMENTOS:
+
+1. Metformina 850mg - tomar 1 comprimido 3 vezes ao dia, junto às refeições
+2. Glibenclamida 5mg - tomar 1 comprimido pela manhã e 1 pela noite, antes das refeições
+3. Enalapril 10mg - tomar 1 comprimido pela manhã
+4. AAS 100mg - tomar 1 comprimido após o almoço
+5. Simeticona - tomar 2 comprimidos após as principais refeições, se necessário
+
+Observações: Manter dieta hipossódica e hipoglicídica. Retornar em 30 dias.
+
+Atenciosamente,
+Dr. Roberto Carlos` 
+        };
+
+        function loadExample(tipo) {
+            document.getElementById('inputText').value = examples[tipo];
+        }
+
+        async function processarTexto() {
+            const texto = document.getElementById('inputText').value.trim();
+
+            if (!texto) {
+                alert('Por favor, cole o texto da receita ou pedido médico.');
+                return;
+            }
+
+            const processBtn = document.getElementById('processBtn');
+            const loadingSection = document.getElementById('loadingSection');
+            const resultSection = document.getElementById('resultSection');
+
+            processBtn.disabled = true;
+            loadingSection.classList.add('active');
+            resultSection.classList.remove('active');
+
+            try {
+                const response = await fetch('/api/processar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texto })
+                });
+
+                const data = await response.json();
+
+                if (data.sucesso) {
+                    exibirResultado(data);
+                } else {
+                    alert('Erro ao processar: ' + (data.erro || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao processar documento. Verifique se o servidor está rodando.');
+            } finally {
+                processBtn.disabled = false;
+                loadingSection.classList.remove('active');
+            }
+        }
+
+        function exibirResultado(data) {
+            const resultSection = document.getElementById('resultSection');
+            const tipoBadge = document.getElementById('tipoBadge');
+            const resultContent = document.getElementById('resultContent');
+            const warningBox = document.getElementById('warningBox');
+
+            tipoBadge.textContent = data.dados.tipo;
+            tipoBadge.className = 'tipo-badge ' + (data.dados.tipo === 'Receita' ? 'receita' : 'exame');
+
+            resultContent.textContent = data.formatado;
+
+            if (data.dados.incertezas && data.dados.incertezas.length > 0) {
+                warningBox.style.display = 'block';
+            } else {
+                warningBox.style.display = 'none';
+            }
+
+            resultSection.classList.add('active');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copiarResultado() {
+            const texto = document.getElementById('resultContent').textContent;
+            navigator.clipboard.writeText(texto).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copiado!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Erro ao copiar:', err);
+            });
+        }
+    </script>
+</body>
+</html>
