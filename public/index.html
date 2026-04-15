@@ -3,441 +3,436 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clínica Agenda IA - Leitura de Receitas e Pedidos Médicos</title>
+    <title>Clínica Agenda IA - Leitura Inteligente de Documentos Médicos</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #0891B2;
+            --primary-dark: #0E7490;
+            --primary-light: #ECFEFF;
+            --secondary: #059669;
+            --secondary-dark: #047857;
+            --secondary-light: #D1FAE5;
+            --accent: #8B5CF6;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
             min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
         }
 
         .header {
-            text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
-        }
-
-        .input-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-
-        .textarea-wrapper {
+            padding: 40px 20px;
+            text-align: center;
             position: relative;
+            overflow: hidden;
         }
 
-        textarea {
-            width: 100%;
-            min-height: 200px;
-            padding: 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s, box-shadow 0.3s;
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
         }
 
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-        }
+        .header-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
 
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 15px;
-        }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
+        .logo-icon { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+        .header h1 { font-size: 2.2em; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.02em; }
+        .header p { font-size: 1.1em; opacity: 0.9; font-weight: 400; }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
 
-        .result-section {
-            display: none;
-        }
+        .card { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow-lg); padding: 35px; margin-bottom: 25px; border: 1px solid var(--border); }
 
-        .result-section.active {
-            display: block;
-        }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid var(--border); }
 
-        .result-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 25px;
-        }
+        .card-icon { width: 48px; height: 48px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
 
-        .result-header h2 {
-            color: #333;
-            font-size: 1.5em;
-        }
+        .card-title { font-size: 1.4em; font-weight: 600; color: var(--text-primary); }
+        .card-subtitle { font-size: 0.9em; color: var(--text-secondary); margin-top: 2px; }
 
-        .tipo-badge {
-            padding: 10px 25px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
+        .upload-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 50px 30px; text-align: center; cursor: pointer; transition: all 0.3s ease; background: linear-gradient(145deg, #FAFBFC 0%, #F1F5F9 100%); }
+        .upload-zone:hover { border-color: var(--primary); background: var(--primary-light); }
+        .upload-zone.dragover { border-color: var(--primary); background: var(--primary-light); transform: scale(1.01); }
+        .upload-zone.has-image { padding: 20px; border-style: solid; border-color: var(--primary); }
 
-        .tipo-badge.receita {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+        .upload-icon { font-size: 4em; margin-bottom: 20px; }
+        .upload-text { font-size: 1.1em; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+        .upload-hint { font-size: 0.9em; color: var(--text-muted); }
 
-        .tipo-badge.exame {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
+        .upload-formats { display: flex; gap: 10px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+        .format-badge { background: var(--primary-light); color: var(--primary-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 500; }
 
-        .result-content {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            max-height: 500px;
-            overflow-y: auto;
-        }
+        #imagePreview { max-width: 100%; max-height: 300px; border-radius: 12px; display: none; box-shadow: var(--shadow-md); }
+        .image-info { display: none; margin-top: 15px; padding: 12px 15px; background: var(--primary-light); border-radius: 10px; font-size: 0.9em; color: var(--primary-dark); }
+        .image-controls { display: none; margin-top: 15px; gap: 10px; justify-content: center; }
 
-        .copy-btn {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background 0.2s;
-        }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; font-size: 1em; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; transition: all 0.2s ease; font-family: inherit; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 14px rgba(8, 145, 178, 0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(8, 145, 178, 0.5); }
+        .btn-secondary { background: var(--background); color: var(--text-secondary); border: 2px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); color: var(--text-primary); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-group { display: flex; gap: 12px; margin-top: 25px; flex-wrap: wrap; }
 
-        .copy-btn:hover {
-            background: #555;
-        }
+        textarea { width: 100%; min-height: 120px; padding: 18px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-family: inherit; resize: vertical; transition: all 0.3s ease; background: var(--surface); }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1); }
 
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
+        .input-section { margin-top: 20px; }
+        .input-label { display: block; font-weight: 500; margin-bottom: 10px; color: var(--text-primary); }
 
-        .loading.active {
-            display: block;
-        }
+        .progress-container { display: none; margin-top: 25px; padding: 25px; background: var(--background); border-radius: 16px; }
+        .progress-container.active { display: block; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-title { font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+        .progress-percent { font-weight: 700; color: var(--primary); font-size: 1.2em; }
+        .progress-bar { height: 12px; background: var(--border); border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%); border-radius: 6px; transition: width 0.3s ease; width: 0%; }
+        .progress-status { margin-top: 12px; font-size: 0.9em; color: var(--text-secondary); }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
+        .result-card { display: none; }
+        .result-card.active { display: block; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+        .result-title { display: flex; align-items: center; gap: 12px; }
+        .result-title h2 { font-size: 1.4em; font-weight: 600; }
+        .badge { padding: 8px 16px; border-radius: 25px; font-weight: 600; font-size: 0.9em; }
+        .badge-receita { background: var(--secondary-light); color: var(--secondary-dark); }
+        .badge-exame { background: var(--primary-light); color: var(--primary-dark); }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--background); padding: 20px; border-radius: 14px; text-align: center; border: 1px solid var(--border); }
+        .stat-number { font-size: 2.2em; font-weight: 700; color: var(--primary); line-height: 1; }
+        .stat-label { font-size: 0.85em; color: var(--text-secondary); margin-top: 5px; }
 
-        .example-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed #ddd;
-        }
+        .result-content { background: var(--background); border-radius: 14px; padding: 25px; font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; white-space: pre-wrap; line-height: 1.8; font-size: 14px; border: 1px solid var(--border); max-height: 450px; overflow-y: auto; }
 
-        .example-section h3 {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-        }
+        .alert { padding: 16px 20px; border-radius: 12px; font-size: 0.95em; margin-top: 20px; display: flex; align-items: flex-start; gap: 12px; }
+        .alert-icon { font-size: 1.3em; flex-shrink: 0; }
+        .alert-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .alert-info { background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary); }
 
-        .example-btn {
-            background: #f0f0f0;
-            color: #333;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.85em;
-            margin-right: 8px;
-            margin-bottom: 8px;
-            transition: background 0.2s;
-        }
+        .examples-section { margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border); }
+        .examples-title { font-size: 0.9em; font-weight: 500; color: var(--text-secondary); margin-bottom: 12px; }
+        .examples-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+        .example-btn { background: var(--background); border: 1px solid var(--border); color: var(--text-secondary); padding: 10px 16px; border-radius: 10px; font-size: 0.9em; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; }
+        .example-btn:hover { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
 
-        .example-btn:hover {
-            background: #e0e0e0;
-        }
+        .footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 0.9em; }
+        .footer-brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; font-weight: 600; color: var(--text-primary); }
+        .divider { height: 1px; background: var(--border); margin: 30px 0; }
 
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            opacity: 0.8;
-            font-size: 0.9em;
-        }
-
-        .alert-box {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-top: 15px;
-            font-size: 0.9em;
-        }
-
-        .alert-box.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .alert-box.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-
-        @media (max-width: 600px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            textarea {
-                min-height: 150px;
-            }
+        @media (max-width: 640px) {
+            .header { padding: 30px 15px; }
+            .header h1 { font-size: 1.7em; }
+            .card { padding: 25px 20px; border-radius: 16px; }
+            .upload-zone { padding: 35px 20px; }
+            .upload-icon { font-size: 3em; }
+            .btn-group { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Clínica Agenda IA</h1>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏥</div>
+                <h1>Clínica Agenda IA</h1>
+            </div>
             <p>Leitura inteligente de receitas e pedidos médicos</p>
         </div>
+    </header>
 
-        <div class="card input-section">
-            <h2>📝 Cole o texto da receita ou pedido médico</h2>
-
-            <div class="textarea-wrapper">
-                <textarea id="inputText" placeholder="Cole aqui o texto extraído da receita ou pedido médico...&#10;&#10;Exemplos:&#10;- Lista de medicamentos com dosagens&#10;- Pedido de exames laboratoriais&#10;- Receituário médico&#10;- Solicitação de exames de imagem"></textarea>
-            </div>
-
-            <div class="example-section">
-                <h3>Exemplos rápida (clique para testar):</h3>
-                <button class="example-btn" onclick="loadExample('receita')">📋 Receita Simples</button>
-                <button class="example-btn" onclick="loadExample('exame')">🔬 Pedido de Exame</button>
-                <button class="example-btn" onclick="loadExample('completo')">📄 Receita Completa</button>
-            </div>
-
-            <button class="btn" id="processBtn" onclick="processarTexto()">
-                Analisar Documento
-            </button>
-
-            <div class="alert-box info">
-                <strong>ℹ️ Lembre-se:</strong> Esta ferramenta é um auxiliar de leitura. Sempre confirme as informações diretamente com o paciente ou profissional de saúde.
-            </div>
-        </div>
-
-        <div class="card loading" id="loadingSection">
-            <div class="spinner"></div>
-            <p>Processando documento médico...</p>
-        </div>
-
-        <div class="card result-section" id="resultSection">
-            <div class="result-header">
-                <h2>📊 Resultado da Análise</h2>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <span class="tipo-badge" id="tipoBadge"></span>
-                    <button class="copy-btn" onclick="copiarResultado()">📋 Copiar</button>
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <div class="card-icon">📷</div>
+                <div>
+                    <h2 class="card-title">Análise de Documentos</h2>
+                    <p class="card-subtitle">Envie uma imagem ou cole o texto para análise</p>
                 </div>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Arraste uma imagem ou clique para selecionar</div>
+                <div class="upload-hint">A imagem será processada automaticamente via OCR</div>
+                <div class="upload-formats">
+                    <span class="format-badge">JPG</span>
+                    <span class="format-badge">PNG</span>
+                    <span class="format-badge">WEBP</span>
+                    <span class="format-badge">Máx 10MB</span>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            </div>
+
+            <img id="imagePreview" alt="Prévia da imagem">
+            <div class="image-info" id="imageInfo"><span>✅ Imagem carregada - Clique em "Analisar" para processar</span></div>
+            <div class="image-controls" id="imageControls">
+                <button class="btn btn-secondary" onclick="clearImage()">🗑️ Remover Imagem</button>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-header">
+                    <div class="progress-title"><span>⏳ Processando OCR...</span></div>
+                    <div class="progress-percent" id="progressPercent">0%</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <div class="progress-status" id="progressStatus">Inicializando...</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="input-section">
+                <label class="input-label">📝 Texto extraído (você pode editar):</label>
+                <textarea id="ocrText" placeholder="O texto extraído da imagem aparecerá aqui para revisão..."></textarea>
+            </div>
+
+            <div class="examples-section">
+                <div class="examples-title">Ou teste com exemplos:</div>
+                <div class="examples-grid">
+                    <button class="example-btn" onclick="loadExample('receita')">📋 Receita Simples</button>
+                    <button class="example-btn" onclick="loadExample('exame')">🔬 Pedido de Exame</button>
+                    <button class="example-btn" onclick="loadExample('completo')">📄 Receita Completa</button>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="analyzeBtn" onclick="processarTexto()">🔍 Analisar Documento</button>
+            </div>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">ℹ️</span>
+                <div><strong>Lembre-se:</strong> Esta ferramenta é um auxiliar de leitura. Sempre confirme as informações diretamente com o paciente ou profissional de saúde.</div>
+            </div>
+        </section>
+
+        <section class="card result-card" id="resultCard">
+            <div class="card-header">
+                <div class="card-icon">📊</div>
+                <div>
+                    <h2 class="card-title">Resultado da Análise</h2>
+                    <p class="card-subtitle">Informações extraídas do documento</p>
+                </div>
+            </div>
+
+            <div class="result-header">
+                <div class="result-title">
+                    <h2>Documento Identificado</h2>
+                    <span class="badge badge-receita" id="tipoBadge">Receita</span>
+                </div>
+                <button class="btn btn-secondary" onclick="copiarResultado()">📋 Copiar Resultado</button>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card"><div class="stat-number" id="statItens">0</div><div class="stat-label">Itens</div></div>
+                <div class="stat-card"><div class="stat-number" id="statFrequencias">0</div><div class="stat-label">Frequências</div></div>
+                <div class="stat-card"><div class="stat-number" id="statIncertos">0</div><div class="stat-label">Incertos</div></div>
             </div>
 
             <div class="result-content" id="resultContent"></div>
 
-            <div class="alert-box warning" id="warningBox" style="display: none;">
-                <strong>⚠️ Atenção:</strong> Verifique os itens marcados como incertos antes de prosseguir.
+            <div class="alert alert-warning" id="warningAlert" style="display: none;">
+                <span class="alert-icon">⚠️</span>
+                <div><strong>Atenção:</strong> Verifique os itens marcados como incertos antes de prosseguir.</div>
             </div>
-        </div>
+        </section>
+    </main>
 
-        <div class="footer">
-            <p>Clínica Agenda IA - Ferramenta de apoio à leitura de documentos médicos</p>
-            <p>Não fornece diagnósticos • Sempre confirme informações com profissionais de saúde</p>
-        </div>
-    </div>
+    <footer class="footer">
+        <div class="footer-brand"><span>🏥</span><span>Clínica Agenda IA</span></div>
+        <p>Ferramenta de apoio à leitura de documentos médicos</p>
+        <p>Não fornece diagnósticos • Sempre confirme informações com profissionais de saúde</p>
+    </footer>
 
     <script>
-        const examples = {
-            receita: `Receita Médica
-Paciente: João Silva
-Medicamentos:
-
-1. Losartana 50mg - tomar 1 comprimido pela manhã
-2. Omeprazol 20mg - tomar 1 comprimido antes do café da manhã
-3. Sinvastatina 20mg - tomar 1 comprimido à noite
-4. Dorflex - tomar 1 comprimido se dor`,
-
-            exame: `Pedido de Exame
-Paciente: Maria Santos
-
-Exames solicitados:
-1. Hemograma completo
-2. Glicemia de jejum
-3. Colesterol total e frações
-4. Triglicerídeos
-5. Creatinina
-6. TSH
-7. Urina tipo I
-8. Ultrassonografia abdominal total`,
-
-            completo: `RECEITA MÉDICA
-Dr. Roberto Carlos - CRM/SP 123456
-
-Paciente: Ana Paula Ferreira
-Data: 10/04/2026
-
-MEDICAMENTOS:
-
-1. Metformina 850mg - tomar 1 comprimido 3 vezes ao dia, junto às refeições
-2. Glibenclamida 5mg - tomar 1 comprimido pela manhã e 1 pela noite, antes das refeições
-3. Enalapril 10mg - tomar 1 comprimido pela manhã
-4. AAS 100mg - tomar 1 comprimido após o almoço
-5. Simeticona - tomar 2 comprimidos após as principais refeições, se necessário
-
-Observações: Manter dieta hipossódica e hipoglicídica. Retornar em 30 dias.
-
-Atenciosamente,
-Dr. Roberto Carlos` 
+        const engine = {
+            identificarTipo(texto) {
+                const textoLower = texto.toLowerCase();
+                const palavrasExame = ['exame', 'ultrassonografia', 'ultrasonografia', 'tomografia', 'ressonância', 'raio-x', 'rx', 'laboratório', 'laboratorio', 'hemograma', 'glicemia', 'colesterol', 'triglicerídeos', 'triglicerideos', 'creatinina', 'ureia', 'urea', 'tsh', 't4', 't3', 'ecg', 'holter', 'mapa', 'doppler', 'biópsia', 'biopsia', 'colposcopia', 'preventivo', 'papanicolau', 'parasitológico', 'parasitologico', 'cultura', 'swab', 'teste', 'prova', 'lipidograma', 'HbA1c', 'hemoglobina glicada', 'eletrólitos', 'eletrolitos', 'sódio', 'sodio', 'potássio', 'potassio', 'magnésio', 'magnesio', 'fosfatase', 'gama gt', 'tgo', 'tgp', 'transaminases', 'bilirrubina', 'albumina', 'proteínas', 'proteinas', 'coagulograma', 'tp', 'ttpa', 'ferro', 'ferritina', 'transferritina', 'vitamina d', 'vitamina b12', 'ácido fólico', 'acido folico', 'ca 125', 'ca 19.9', 'cea', 'psa', 'afp', 'beta hcg', 'densitometria', 'mamografia', 'elastografia', 'broncoscopia', 'endoscopia', 'colonoscopia', 'retossigmoidoscopia', 'spirometria', 'espirometria', 'pefr', 'teste esforço', 'prova função', 'função hepática', 'função renal', 'clearance', 'proteinúria', 'proteinuria', 'easo', 'esfregaço'];
+                const palavrasReceita = ['receita', 'medicamento', 'cp', 'comp', 'drg', 'drops', 'ml', 'mg', 'aplicar', 'tomar', 'usar', 'aplicação', 'iny', 'injetável', 'comprimido', 'cápsula', 'xarope', 'solução', 'suspensão'];
+                let countExame = 0, countReceita = 0;
+                palavrasExame.forEach(p => { if (textoLower.includes(p)) countExame++; });
+                palavrasReceita.forEach(p => { if (textoLower.includes(p)) countReceita++; });
+                return countExame > countReceita ? 'Pedido de Exame' : 'Receita';
+            },
+            extrairMedicamentos(texto) {
+                const linhas = texto.split('\n').filter(l => l.trim());
+                const medicamentos = [];
+                const seen = new Set();
+                for (const linha of linhas) {
+                    const match = linha.match(/^\s*[\d\.\)\-]+\s*(.+?)\s+(\d+[\d\.,]*)\s*(?:mg|mcg|g|ml|%|comp|cáps?|cp|caps?|drg|gotas?|fl|amp|aerosol|ui)/i);
+                    if (match) {
+                        const nome = match[1].trim(), dose = match[2].trim();
+                        if (nome.length > 2 && !seen.has(nome.toLowerCase())) { seen.add(nome.toLowerCase()); medicamentos.push({ nome, dose, linhaOriginal: linha.trim() }); }
+                        continue;
+                    }
+                    const match2 = linha.match(/^\s*(.+?)\s+(\d+[\d\.,]*)\s*(?:mg|mcg|g|ml|%|comp|cáps?|cp|caps?|drg|gotas?|fl|amp|aerosol|ui)/i);
+                    if (match2 && match2[1].length > 2 && match2[1].length < 50) {
+                        const nome = match2[1].trim();
+                        if (!seen.has(nome.toLowerCase()) && !/^\d+$/.test(nome)) { seen.add(nome.toLowerCase()); medicamentos.push({ nome, dose: match2[2], linhaOriginal: linha.trim() }); }
+                    }
+                }
+                return medicamentos;
+            },
+            extrairExames(texto) {
+                const linhas = texto.split('\n').filter(l => l.trim());
+                const exames = [];
+                const seen = new Set();
+                const palavrasExame = ['ultrassonografia', 'ultrasonografia', 'tomografia', 'ressonância', 'ressonancia', 'raio-x', 'raio x', 'rx', 'laboratório', 'laboratorio', 'hemograma', 'glicemia', 'colesterol', 'triglicerídeos', 'triglicerideos', 'creatinina', 'ureia', 'urea', 'tsh', 't4', 't3', 'ecg', 'holter', 'mapa', 'doppler', 'biópsia', 'biopsia', 'colposcopia', 'preventivo', 'papanicolau', 'parasitológico', 'parasitologico', 'cultura', 'swab', 'teste', 'prova', 'lipidograma', 'HbA1c', 'hemoglobina glicada', 'eletrólitos', 'eletrolitos', 'sódio', 'sodio', 'potássio', 'potassio', 'magnésio', 'magnesio', 'fosfatase', 'gama gt', 'tgo', 'tgp', 'transaminases', 'bilirrubina', 'albumina', 'proteínas', 'proteinas', 'coagulograma', 'tp', 'ttpa', 'ferro', 'ferritina', 'transferritina', 'vitamina d', 'vitamina b12', 'ácido fólico', 'acido folico', 'ca 125', 'ca 19.9', 'cea', 'psa', 'afp', 'beta hcg', 'densitometria', 'mamografia', 'elastografia', 'broncoscopia', 'endoscopia', 'colonoscopia', 'retossigmoidoscopia', 'spirometria', 'espirometria', 'pefr', 'teste esforço', 'prova função', 'função hepática', 'função renal', 'clearance', 'proteinúria', 'proteinuria', 'easo', 'esfregaço'];
+                for (const linha of linhas) {
+                    const linhaLower = linha.toLowerCase();
+                    for (const exame of palavrasExame) {
+                        if (linhaLower.includes(exame)) {
+                            let nomeExame = linha.trim().replace(/^\s*[\d\.\)\-]+\s*/, '');
+                            if (!seen.has(nomeExame.toLowerCase())) { seen.add(nomeExame.toLowerCase()); exames.push({ nome: nomeExame, linhaOriginal: linha.trim() }); }
+                            break;
+                        }
+                    }
+                }
+                return exames;
+            },
+            extrairFrequencia(texto) {
+                const frequencias = [];
+                const padroesFrequencia = [/\b(\d+)\s*(?:em|vezes)\s*(\d+)\s*h\b/i, /\b(\d+)[\/\-](\d+)h\b/i, /\ba\s+cada\s+(\d+)\s*(?:hora|h)\b/i, /\b(\d+)x?\s*(?:ao|dia|por)\s*dia\b/i, /\b(\d+)\s*(?:vez|vezes)\s*(?:ao|dia|por)\s*dia\b/i, /\b(manhã|tarde|noite|manhãs|tardes|noites)\b/i, /\b(jejum|em jejum)\b/i, /\b(antes|durante|após|após\s*as)\s*(?:refeição|refeições|almoço|jantar|café)\b/i];
+                for (const linha of texto.split('\n')) {
+                    for (const padrao of padroesFrequencia) { if (padrao.test(linha)) { frequencias.push(linha.trim()); break; } }
+                }
+                return [...new Set(frequencias)];
+            },
+            detectarIncertezas(texto) {
+                const incertezas = [];
+                const palavrasIndecisas = ['?', 'ilegível', 'ilegivél', 'incompreensível', 'duvidoso', 'provável', 'provavel', 'talvez', 'aparenta', 'parece', '??', 'xxx', 'incerto'];
+                texto.split('\n').forEach((linha, i) => { for (const palavra of palavrasIndecisas) { if (linha.toLowerCase().includes(palavra)) { incertezas.push({ linha: i + 1, texto: linha.trim(), motivo: 'Termo ambíguo ou ilegível detectado' }); break; } } });
+                return incertezas;
+            },
+            processar(texto) {
+                const tipo = this.identificarTipo(texto);
+                const itens = tipo === 'Receita' ? this.extrairMedicamentos(texto) : this.extrairExames(texto);
+                const frequencias = this.extrairFrequencia(texto);
+                const incertezas = this.detectarIncertezas(texto);
+                return { tipo, itens, frequencias, incertezas };
+            },
+            formatarSaida(dados) {
+                let saida = `═══════════════════════════════════════\n       ANÁLISE DE DOCUMENTO MÉDICO\n═══════════════════════════════════════\n\n📋 TIPO: ${dados.tipo}\n\n──────────────────\nITENS IDENTIFICADOS\n──────────────────\n`;
+                if (dados.itens.length === 0) { saida += `⚠️ Nenhum item identificado com certeza\n`; }
+                else { dados.itens.forEach((item, i) => { saida += `\n${i + 1}. ${item.nome}`; if (item.dose) saida += ` - ${item.dose}mg`; saida += `\n   📄 "${item.linhaOriginal}"\n`; }); }
+                if (dados.frequencias.length > 0) { saida += `\n──────────────────\nFREQUÊNCIA DE USO\n──────────────────\n`; dados.frequencias.forEach(f => { saida += `• ${f}\n`; }); }
+                if (dados.incertezas.length > 0) { saida += `\n──────────────────\n⚠️ ITENS INCERTOS\n──────────────────\n`; dados.incertezas.forEach(inc => { saida += `\n⚠️ Linha ${inc.linha}: "${inc.texto}"\n   Motivo: ${inc.motivo}\n`; }); }
+                saida += `\n═══════════════════════════════════════\n        INFORMAÇÕES IMPORTANTES\n═══════════════════════════════════════\n• Este é apenas um auxiliar de leitura\n• Confirme todos os dados com o paciente\n• Não forneça diagnósticos médicos\n• Verifique doses antes da administração\n═══════════════════════════════════════\n`;
+                return saida;
+            }
         };
 
-        function loadExample(tipo) {
-            document.getElementById('inputText').value = examples[tipo];
+        const examples = {
+            receita: `Receita Médica\nPaciente: João Silva\nMedicamentos:\n\n1. Losartana 50mg - tomar 1 comprimido pela manhã\n2. Omeprazol 20mg - tomar 1 comprimido antes do café da manhã\n3. Sinvastatina 20mg - tomar 1 comprimido à noite\n4. Dorflex - tomar 1 comprimido se dor`,
+            exame: `Pedido de Exame\nPaciente: Maria Santos\n\nExames solicitados:\n1. Hemograma completo\n2. Glicemia de jejum\n3. Colesterol total e frações\n4. Triglicerídeos\n5. Creatinina\n6. TSH\n7. Urina tipo I\n8. Ultrassonografia abdominal total`,
+            completo: `RECEITA MÉDICA\nDr. Roberto Carlos - CRM/SP 123456\n\nPaciente: Ana Paula Ferreira\nData: 10/04/2026\n\nMEDICAMENTOS:\n\n1. Metformina 850mg - tomar 1 comprimido 3 vezes ao dia, junto às refeições\n2. Glibenclamida 5mg - tomar 1 comprimido pela manhã e 1 pela noite, antes das refeições\n3. Enalapril 10mg - tomar 1 comprimido pela manhã\n4. AAS 100mg - tomar 1 comprimido após o almoço\n5. Simeticona - tomar 2 comprimidos após as principais refeições, se necessário\n\nObservações: Manter dieta hipossódica e hipoglicídica. Retornar em 30 dias.\n\nAtenciosamente,\nDr. Roberto Carlos`
+        };
+
+        let currentImage = null;
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageControls = document.getElementById('imageControls');
+        const imageInfo = document.getElementById('imageInfo');
+        const progressContainer = document.getElementById('progressContainer');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+        uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); const file = e.dataTransfer.files[0]; if (file && file.type.startsWith('image/')) processImage(file); });
+        fileInput.addEventListener('change', (e) => { if (e.target.files[0]) processImage(e.target.files[0]); });
+
+        function processImage(file) {
+            if (file.size > 10 * 1024 * 1024) { alert('Imagem muito grande. Máximo 10MB.'); return; }
+            currentImage = file;
+            const reader = new FileReader();
+            reader.onload = (e) => { imagePreview.src = e.target.result; imagePreview.style.display = 'block'; uploadZone.classList.add('has-image'); imageControls.style.display = 'flex'; imageInfo.style.display = 'block'; runOCR(file); };
+            reader.readAsDataURL(file);
         }
 
-        async function processarTexto() {
-            const texto = document.getElementById('inputText').value.trim();
-
-            if (!texto) {
-                alert('Por favor, cole o texto da receita ou pedido médico.');
-                return;
-            }
-
-            const processBtn = document.getElementById('processBtn');
-            const loadingSection = document.getElementById('loadingSection');
-            const resultSection = document.getElementById('resultSection');
-
-            processBtn.disabled = true;
-            loadingSection.classList.add('active');
-            resultSection.classList.remove('active');
-
+        async function runOCR(file) {
+            progressContainer.classList.add('active');
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            const ocrText = document.getElementById('ocrText');
             try {
-                const response = await fetch('/api/processar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ texto })
+                const result = await Tesseract.recognize(file, 'por+eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') { const progress = Math.round(m.progress * 100); progressFill.style.width = progress + '%'; progressPercent.textContent = progress + '%'; progressStatus.textContent = 'Reconhecendo texto...'; }
+                        else if (m.status === 'loading language traineddata') { progressStatus.textContent = 'Carregando modelo de idioma...'; progressFill.style.width = '20%'; progressPercent.textContent = '20%'; }
+                        else if (m.status === 'initializing api') { progressStatus.textContent = 'Inicializando OCR...'; progressFill.style.width = '10%'; progressPercent.textContent = '10%'; }
+                        else { progressStatus.textContent = m.status; }
+                    }
                 });
-
-                const data = await response.json();
-
-                if (data.sucesso) {
-                    exibirResultado(data);
-                } else {
-                    alert('Erro ao processar: ' + (data.erro || 'Erro desconhecido'));
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao processar documento. Verifique se o servidor está rodando.');
-            } finally {
-                processBtn.disabled = false;
-                loadingSection.classList.remove('active');
-            }
+                progressFill.style.width = '100%'; progressPercent.textContent = '100%'; progressStatus.textContent = 'OCR concluído!';
+                ocrText.value = result.data.text.trim();
+                setTimeout(() => { progressContainer.classList.remove('active'); }, 1500);
+            } catch (error) { console.error('Erro OCR:', error); progressStatus.textContent = 'Erro ao processar imagem.'; setTimeout(() => { progressContainer.classList.remove('active'); }, 2000); }
         }
 
-        function exibirResultado(data) {
-            const resultSection = document.getElementById('resultSection');
+        function clearImage() { currentImage = null; imagePreview.style.display = 'none'; imagePreview.src = ''; uploadZone.classList.remove('has-image'); imageControls.style.display = 'none'; imageInfo.style.display = 'none'; fileInput.value = ''; document.getElementById('ocrText').value = ''; progressContainer.classList.remove('active'); }
+        function loadExample(tipo) { document.getElementById('ocrText').value = examples[tipo]; }
+
+        function processarTexto() {
+            const ocrText = document.getElementById('ocrText').value.trim();
+            if (!ocrText) { alert('Por favor, envie uma imagem ou cole o texto da receita ou pedido médico.'); return; }
+            const dados = engine.processar(ocrText);
+            const formatado = engine.formatarSaida(dados);
+            exibirResultado(dados, formatado);
+        }
+
+        function exibirResultado(dados, formatado) {
+            const resultCard = document.getElementById('resultCard');
             const tipoBadge = document.getElementById('tipoBadge');
             const resultContent = document.getElementById('resultContent');
-            const warningBox = document.getElementById('warningBox');
-
-            tipoBadge.textContent = data.dados.tipo;
-            tipoBadge.className = 'tipo-badge ' + (data.dados.tipo === 'Receita' ? 'receita' : 'exame');
-
-            resultContent.textContent = data.formatado;
-
-            if (data.dados.incertezas && data.dados.incertezas.length > 0) {
-                warningBox.style.display = 'block';
-            } else {
-                warningBox.style.display = 'none';
-            }
-
-            resultSection.classList.add('active');
-            resultSection.scrollIntoView({ behavior: 'smooth' });
+            const warningAlert = document.getElementById('warningAlert');
+            tipoBadge.textContent = dados.tipo;
+            tipoBadge.className = 'badge ' + (dados.tipo === 'Receita' ? 'badge-receita' : 'badge-exame');
+            document.getElementById('statItens').textContent = dados.itens.length;
+            document.getElementById('statFrequencias').textContent = dados.frequencias.length;
+            document.getElementById('statIncertos').textContent = dados.incertezas.length;
+            resultContent.textContent = formatado;
+            if (dados.incertezas.length > 0) { warningAlert.style.display = 'flex'; } else { warningAlert.style.display = 'none'; }
+            resultCard.classList.add('active');
+            resultCard.scrollIntoView({ behavior: 'smooth' });
         }
 
         function copiarResultado() {
             const texto = document.getElementById('resultContent').textContent;
             navigator.clipboard.writeText(texto).then(() => {
-                const btn = document.querySelector('.copy-btn');
+                const btn = event.target.closest('button');
                 const originalText = btn.textContent;
-                btn.textContent = '✓ Copiado!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('Erro ao copiar:', err);
+                btn.textContent = '✅ Copiado!';
+                setTimeout(() => { btn.textContent = originalText; }, 2000);
             });
         }
     </script>

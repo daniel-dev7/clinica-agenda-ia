@@ -3,9 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clínica Agenda IA - Leitura de Receitas e Pedidos Médicos</title>
+    <title>Clínica Agenda IA - Leitura Inteligente de Documentos Médicos</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #0891B2;
+            --primary-dark: #0E7490;
+            --primary-light: #ECFEFF;
+            --secondary: #059669;
+            --secondary-dark: #047857;
+            --secondary-light: #D1FAE5;
+            --accent: #8B5CF6;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,118 +37,198 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
             min-height: 100vh;
-            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            font-weight: 400;
         }
 
         .container {
             max-width: 900px;
             margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
+            padding: 30px 20px;
         }
 
         .card {
-            background: white;
+            background: var(--surface);
             border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin-bottom: 20px;
+            box-shadow: var(--shadow-lg);
+            padding: 35px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
         }
 
-        .input-section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
         }
 
-        .textarea-wrapper {
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-subtitle {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(145deg, #FAFBFC 0%, #F1F5F9 100%);
             position: relative;
         }
 
-        textarea {
-            width: 100%;
-            min-height: 150px;
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: scale(1.01);
+        }
+
+        .upload-zone.has-image {
             padding: 20px;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            font-size: 16px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-        }
-
-        .upload-area {
-            border: 3px dashed #ccc;
-            border-radius: 15px;
-            padding: 40px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 15px;
-            background: #fafafa;
-        }
-
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f0f0ff;
-        }
-
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #e8f0ff;
-        }
-
-        .upload-area.has-image {
             border-style: solid;
-            border-color: #667eea;
-            padding: 15px;
+            border-color: var(--primary);
         }
 
         .upload-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
+            font-size: 4em;
+            margin-bottom: 20px;
         }
 
         .upload-text {
-            color: #666;
             font-size: 1.1em;
-            margin-bottom: 10px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
         }
 
         .upload-hint {
-            color: #999;
             font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        .upload-formats {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .format-badge {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
         }
 
         #imagePreview {
             max-width: 100%;
             max-height: 300px;
-            border-radius: 10px;
+            border-radius: 12px;
             display: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .image-info {
+            display: none;
+            margin-top: 15px;
+            padding: 12px 15px;
+            background: var(--primary-light);
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: var(--primary-dark);
         }
 
         .image-controls {
@@ -134,29 +238,49 @@
             justify-content: center;
         }
 
-        .image-controls.active {
-            display: flex;
-        }
-
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 12px;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            border-radius: 30px;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 15px;
+            transition: all 0.2s ease;
+            font-family: inherit;
         }
 
-        .btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(8, 145, 178, 0.4);
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(8, 145, 178, 0.5);
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: #FEE2E2;
+            color: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: #FECACA;
         }
 
         .btn:disabled {
@@ -165,325 +289,466 @@
             transform: none;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 0.9em;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
         .btn-group {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            margin-top: 25px;
             flex-wrap: wrap;
-            margin-top: 15px;
         }
 
-        .result-section {
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 18px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: var(--surface);
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1);
+        }
+
+        .input-section {
+            margin-top: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 25px;
+            padding: 25px;
+            background: var(--background);
+            border-radius: 16px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-percent {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.2em;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-status {
+            margin-top: 12px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .result-card {
             display: none;
         }
 
-        .result-section.active {
+        .result-card.active {
             display: block;
         }
 
         .result-header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 25px;
+            align-items: center;
             flex-wrap: wrap;
             gap: 15px;
+            margin-bottom: 25px;
         }
 
-        .result-header h2 {
-            color: #333;
-            font-size: 1.5em;
+        .result-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .tipo-badge {
-            padding: 10px 25px;
+        .result-title h2 {
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 8px 16px;
             border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .tipo-badge.receita {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .tipo-badge.exame {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        .result-content {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            font-family: 'Courier New', monospace;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .copy-btn {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background 0.2s;
-        }
-
-        .copy-btn:hover {
-            background: #555;
-        }
-
-        .example-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed #ddd;
-        }
-
-        .example-section h3 {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 10px;
-        }
-
-        .example-btn {
-            background: #f0f0f0;
-            color: #333;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 0.85em;
-            margin-right: 8px;
-            margin-bottom: 8px;
-            transition: background 0.2s;
-        }
-
-        .example-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            opacity: 0.8;
+            font-weight: 600;
             font-size: 0.9em;
         }
 
-        .alert-box {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-top: 15px;
-            font-size: 0.9em;
+        .badge-receita {
+            background: var(--secondary-light);
+            color: var(--secondary-dark);
         }
 
-        .alert-box.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .alert-box.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
+        .badge-exame {
+            background: var(--primary-light);
+            color: var(--primary-dark);
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
+            background: var(--background);
+            padding: 20px;
+            border-radius: 14px;
             text-align: center;
+            border: 1px solid var(--border);
         }
 
-        .stat-card .number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
         }
 
-        .stat-card .label {
-            color: #666;
-            font-size: 0.9em;
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
         }
 
-        .progress-section {
-            display: none;
+        .result-content {
+            background: var(--background);
+            border-radius: 14px;
+            padding: 25px;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
             margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            font-size: 0.95em;
+            margin-top: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-icon {
+            font-size: 1.3em;
+            flex-shrink: 0;
+        }
+
+        .alert-warning {
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FCD34D;
+        }
+
+        .alert-info {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border: 1px solid var(--primary);
+        }
+
+        .alert-success {
+            background: var(--secondary-light);
+            color: var(--secondary-dark);
+            border: 1px solid var(--secondary);
+        }
+
+        .examples-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border);
+        }
+
+        .examples-title {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .examples-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .example-btn {
+            background: var(--background);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .example-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+
+        .footer {
             text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
         }
 
-        .progress-section.active {
-            display: block;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s;
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 30px 0;
         }
 
-        .progress-text {
-            color: #666;
-            font-size: 0.9em;
-        }
+        @media (max-width: 640px) {
+            .header {
+                padding: 30px 15px;
+            }
 
-        .ocr-text-section {
-            margin-top: 15px;
-            display: none;
-        }
-
-        .ocr-text-section.active {
-            display: block;
-        }
-
-        .ocr-text-section label {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        @media (max-width: 600px) {
             .header h1 {
-                font-size: 1.8em;
+                font-size: 1.7em;
             }
 
             .card {
-                padding: 20px;
+                padding: 25px 20px;
+                border-radius: 16px;
             }
 
-            textarea {
-                min-height: 120px;
+            .upload-zone {
+                padding: 35px 20px;
             }
 
-            .result-header {
+            .upload-icon {
+                font-size: 3em;
+            }
+
+            .btn-group {
                 flex-direction: column;
-                align-items: flex-start;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🏥 Clínica Agenda IA</h1>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏥</div>
+                <h1>Clínica Agenda IA</h1>
+            </div>
             <p>Leitura inteligente de receitas e pedidos médicos</p>
         </div>
+    </header>
 
-        <div class="card input-section">
-            <h2>� Envie uma foto da receita ou pedido médico</h2>
+    <main class="container">
+        <section class="card">
+            <div class="card-header">
+                <div class="card-icon">📷</div>
+                <div>
+                    <h2 class="card-title">Análise de Documentos</h2>
+                    <p class="card-subtitle">Envie uma imagem ou cole o texto para análise</p>
+                </div>
+            </div>
 
-            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-zone" id="uploadZone">
                 <div class="upload-icon">📸</div>
-                <div class="upload-text">Clique ou arraste uma imagem aqui</div>
-                <div class="upload-hint">Formatos: JPG, PNG, WEBP (máx. 10MB)</div>
-                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                <div class="upload-text">Arraste uma imagem ou clique para selecionar</div>
+                <div class="upload-hint">A imagem será processada automaticamente via OCR</div>
+                <div class="upload-formats">
+                    <span class="format-badge">JPG</span>
+                    <span class="format-badge">PNG</span>
+                    <span class="format-badge">WEBP</span>
+                    <span class="format-badge">Máx 10MB</span>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;">
             </div>
 
             <img id="imagePreview" alt="Prévia da imagem">
 
-            <div class="image-controls" id="imageControls">
-                <button class="btn-secondary" onclick="clearImage()">🗑️ Remover Imagem</button>
+            <div class="image-info" id="imageInfo">
+                <span>✅ Imagem carregada - Clique em "Analisar" para processar</span>
             </div>
 
-            <div class="progress-section" id="progressSection">
+            <div class="image-controls" id="imageControls">
+                <button class="btn btn-secondary" onclick="clearImage()">
+                    🗑️ Remover Imagem
+                </button>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-header">
+                    <div class="progress-title">
+                        <span>⏳ Processando OCR...</span>
+                    </div>
+                    <div class="progress-percent" id="progressPercent">0%</div>
+                </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
-                <div class="progress-text" id="progressText">Iniciando OCR...</div>
+                <div class="progress-status" id="progressStatus">Inicializando...</div>
             </div>
 
-            <div class="ocr-text-section" id="ocrTextSection">
-                <label>📝 Texto extraído via OCR (você pode editar):</label>
-                <textarea id="ocrText" style="min-height: 100px;"></textarea>
+            <div class="divider"></div>
+
+            <div class="input-section">
+                <label class="input-label">📝 Texto extraído (você pode editar):</label>
+                <textarea id="ocrText" placeholder="O texto extraído da imagem aparecerá aqui para revisão..."></textarea>
             </div>
 
-            <div style="margin-top: 15px; color: #666; font-size: 0.95em;">
-                <strong>Ou</strong> cole o texto manualmente:
-            </div>
-
-            <div class="textarea-wrapper" style="margin-top: 10px;">
-                <textarea id="inputText" placeholder="Cole aqui o texto extraído da receita ou pedido médico..."></textarea>
-            </div>
-
-            <div class="example-section">
-                <h3>Exemplos rápida (clique para testar):</h3>
-                <button class="example-btn" onclick="loadExample('receita')">📋 Receita Simples</button>
-                <button class="example-btn" onclick="loadExample('exame')">🔬 Pedido de Exame</button>
-                <button class="example-btn" onclick="loadExample('completo')">📄 Receita Completa</button>
+            <div class="examples-section">
+                <div class="examples-title">Ou teste com exemplos:</div>
+                <div class="examples-grid">
+                    <button class="example-btn" onclick="loadExample('receita')">
+                        📋 Receita Simples
+                    </button>
+                    <button class="example-btn" onclick="loadExample('exame')">
+                        🔬 Pedido de Exame
+                    </button>
+                    <button class="example-btn" onclick="loadExample('completo')">
+                        📄 Receita Completa
+                    </button>
+                </div>
             </div>
 
             <div class="btn-group">
-                <button class="btn" id="processBtn" onclick="processarTexto()">
+                <button class="btn btn-primary" id="analyzeBtn" onclick="processarTexto()">
                     🔍 Analisar Documento
                 </button>
             </div>
 
-            <div class="alert-box info">
-                <strong>ℹ️ Lembre-se:</strong> Esta ferramenta é um auxiliar de leitura. Sempre confirme as informações diretamente com o paciente ou profissional de saúde.
+            <div class="alert alert-info">
+                <span class="alert-icon">ℹ️</span>
+                <div>
+                    <strong>Lembre-se:</strong> Esta ferramenta é um auxiliar de leitura. Sempre confirme as informações diretamente com o paciente ou profissional de saúde.
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="card result-section" id="resultSection">
-            <div class="result-header">
-                <h2>📊 Resultado da Análise</h2>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <span class="tipo-badge" id="tipoBadge"></span>
-                    <button class="copy-btn" onclick="copiarResultado()">📋 Copiar</button>
+        <section class="card result-card" id="resultCard">
+            <div class="card-header">
+                <div class="card-icon">📊</div>
+                <div>
+                    <h2 class="card-title">Resultado da Análise</h2>
+                    <p class="card-subtitle">Informações extraídas do documento</p>
                 </div>
             </div>
 
-            <div class="stats-grid" id="statsGrid"></div>
+            <div class="result-header">
+                <div class="result-title">
+                    <h2>Documento Identificado</h2>
+                    <span class="badge badge-receita" id="tipoBadge">Receita</span>
+                </div>
+                <button class="btn btn-secondary" onclick="copiarResultado()">
+                    📋 Copiar Resultado
+                </button>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-number" id="statItens">0</div>
+                    <div class="stat-label">Itens</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statFrequencias">0</div>
+                    <div class="stat-label">Frequências</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="statIncertos">0</div>
+                    <div class="stat-label">Incertos</div>
+                </div>
+            </div>
 
             <div class="result-content" id="resultContent"></div>
 
-            <div class="alert-box warning" id="warningBox" style="display: none;">
-                <strong>⚠️ Atenção:</strong> Verifique os itens marcados como incertos antes de prosseguir.
+            <div class="alert alert-warning" id="warningAlert" style="display: none;">
+                <span class="alert-icon">⚠️</span>
+                <div>
+                    <strong>Atenção:</strong> Verifique os itens marcados como incertos antes de prosseguir.
+                </div>
             </div>
-        </div>
+        </section>
+    </main>
 
-        <div class="footer">
-            <p>Clínica Agenda IA - Ferramenta de apoio à leitura de documentos médicos</p>
-            <p>Não fornece diagnósticos • Sempre confirme informações com profissionais de saúde</p>
+    <footer class="footer">
+        <div class="footer-brand">
+            <span>🏥</span>
+            <span>Clínica Agenda IA</span>
         </div>
-    </div>
+        <p>Ferramenta de apoio à leitura de documentos médicos</p>
+        <p>Não fornece diagnósticos • Sempre confirme informações com profissionais de saúde</p>
+    </footer>
 
     <script>
         const engine = {
@@ -589,8 +854,7 @@
                 const incertezas = [];
                 const palavrasIndecisas = ['?', 'ilegível', 'ilegivél', 'incompreensível', 'duvidoso', 'provável', 'provavel', 'talvez', 'aparenta', 'parece', '??', 'xxx', 'incerto'];
 
-                const linhas = texto.split('\n');
-                linhas.forEach((linha, i) => {
+                texto.split('\n').forEach((linha, i) => {
                     for (const palavra of palavrasIndecisas) {
                         if (linha.toLowerCase().includes(palavra)) {
                             incertezas.push({ linha: i + 1, texto: linha.trim(), motivo: 'Termo ambíguo ou ilegível detectado' });
@@ -707,77 +971,57 @@ Dr. Roberto Carlos`
 
         let currentImage = null;
 
-        function loadExample(tipo) {
-            document.getElementById('inputText').value = examples[tipo];
-            document.getElementById('ocrText').value = '';
-            document.getElementById('ocrTextSection').classList.remove('active');
-        }
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageControls = document.getElementById('imageControls');
+        const imageInfo = document.getElementById('imageInfo');
+        const progressContainer = document.getElementById('progressContainer');
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                processImage(file);
-            }
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.currentTarget.classList.add('dragover');
-        }
-
-        function handleDragLeave(event) {
-            event.currentTarget.classList.remove('dragover');
-        }
-
-        function handleDrop(event) {
-            event.preventDefault();
-            event.currentTarget.classList.remove('dragover');
-
-            const file = event.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                processImage(file);
-            }
-        }
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) processImage(file);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) processImage(e.target.files[0]);
+        });
 
         function processImage(file) {
-            if (!file.type.startsWith('image/')) {
-                alert('Por favor, selecione uma imagem.');
-                return;
-            }
-
             if (file.size > 10 * 1024 * 1024) {
-                alert('A imagem é muito grande. Por favor, selecione uma imagem de até 10MB.');
+                alert('Imagem muito grande. Máximo 10MB.');
                 return;
             }
 
             currentImage = file;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.getElementById('imagePreview');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-
-                const uploadArea = document.getElementById('uploadArea');
-                uploadArea.classList.add('has-image');
-
-                document.getElementById('imageControls').classList.add('active');
-
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                uploadZone.classList.add('has-image');
+                imageControls.style.display = 'flex';
+                imageInfo.style.display = 'block';
                 runOCR(file);
             };
             reader.readAsDataURL(file);
         }
 
         async function runOCR(file) {
-            const progressSection = document.getElementById('progressSection');
+            progressContainer.classList.add('active');
             const progressFill = document.getElementById('progressFill');
-            const progressText = document.getElementById('progressText');
-            const ocrTextSection = document.getElementById('ocrTextSection');
-            const ocrTextarea = document.getElementById('ocrText');
-
-            progressSection.classList.add('active');
-            ocrTextSection.classList.remove('active');
-            ocrTextarea.value = '';
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            const ocrText = document.getElementById('ocrText');
 
             try {
                 const result = await Tesseract.recognize(file, 'por+eng', {
@@ -785,129 +1029,107 @@ Dr. Roberto Carlos`
                         if (m.status === 'recognizing text') {
                             const progress = Math.round(m.progress * 100);
                             progressFill.style.width = progress + '%';
-                            progressText.textContent = `Reconhecendo texto... ${progress}%`;
+                            progressPercent.textContent = progress + '%';
+                            progressStatus.textContent = 'Reconhecendo texto...';
                         } else if (m.status === 'loading language traineddata') {
-                            progressText.textContent = 'Carregando modelo de idioma...';
+                            progressStatus.textContent = 'Carregando modelo de idioma...';
                             progressFill.style.width = '20%';
+                            progressPercent.textContent = '20%';
                         } else if (m.status === 'initializing api') {
-                            progressText.textContent = 'Inicializando OCR...';
+                            progressStatus.textContent = 'Inicializando OCR...';
                             progressFill.style.width = '10%';
+                            progressPercent.textContent = '10%';
                         } else {
-                            progressText.textContent = m.status;
+                            progressStatus.textContent = m.status;
                         }
                     }
                 });
 
                 progressFill.style.width = '100%';
-                progressText.textContent = 'OCR concluído!';
+                progressPercent.textContent = '100%';
+                progressStatus.textContent = 'OCR concluído!';
 
                 const texto = result.data.text.trim();
-
-                if (texto) {
-                    ocrTextarea.value = texto;
-                    ocrTextSection.classList.add('active');
-                } else {
-                    progressText.textContent = 'Nenhum texto encontrado na imagem.';
-                }
+                ocrText.value = texto;
 
                 setTimeout(() => {
-                    progressSection.classList.remove('active');
-                }, 2000);
+                    progressContainer.classList.remove('active');
+                }, 1500);
 
             } catch (error) {
                 console.error('Erro OCR:', error);
-                progressText.textContent = 'Erro ao processar imagem. Tente novamente.';
-                progressSection.classList.remove('active');
+                progressStatus.textContent = 'Erro ao processar imagem.';
+                setTimeout(() => {
+                    progressContainer.classList.remove('active');
+                }, 2000);
             }
         }
 
         function clearImage() {
             currentImage = null;
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('imagePreview').src = '';
-            document.getElementById('uploadArea').classList.remove('has-image');
-            document.getElementById('imageControls').classList.remove('active');
-            document.getElementById('fileInput').value = '';
+            imagePreview.style.display = 'none';
+            imagePreview.src = '';
+            uploadZone.classList.remove('has-image');
+            imageControls.style.display = 'none';
+            imageInfo.style.display = 'none';
+            fileInput.value = '';
             document.getElementById('ocrText').value = '';
-            document.getElementById('ocrTextSection').classList.remove('active');
-            document.getElementById('progressSection').classList.remove('active');
+            progressContainer.classList.remove('active');
+        }
+
+        function loadExample(tipo) {
+            document.getElementById('ocrText').value = examples[tipo];
         }
 
         function processarTexto() {
             const ocrText = document.getElementById('ocrText').value.trim();
-            const manualText = document.getElementById('inputText').value.trim();
-            const texto = ocrText || manualText;
 
-            if (!texto) {
+            if (!ocrText) {
                 alert('Por favor, envie uma imagem ou cole o texto da receita ou pedido médico.');
                 return;
             }
 
-            if (ocrText && manualText) {
-                const combined = `${ocrText}\n\n--- Texto Manual ---\n${manualText}`;
-                var dados = engine.processar(combined);
-            } else {
-                var dados = engine.processar(texto);
-            }
-
+            const dados = engine.processar(ocrText);
             const formatado = engine.formatarSaida(dados);
             exibirResultado(dados, formatado);
         }
 
         function exibirResultado(dados, formatado) {
-            const resultSection = document.getElementById('resultSection');
+            const resultCard = document.getElementById('resultCard');
             const tipoBadge = document.getElementById('tipoBadge');
             const resultContent = document.getElementById('resultContent');
-            const warningBox = document.getElementById('warningBox');
-            const statsGrid = document.getElementById('statsGrid');
+            const warningAlert = document.getElementById('warningAlert');
 
             tipoBadge.textContent = dados.tipo;
-            tipoBadge.className = 'tipo-badge ' + (dados.tipo === 'Receita' ? 'receita' : 'exame');
+            tipoBadge.className = 'badge ' + (dados.tipo === 'Receita' ? 'badge-receita' : 'badge-exame');
+
+            document.getElementById('statItens').textContent = dados.itens.length;
+            document.getElementById('statFrequencias').textContent = dados.frequencias.length;
+            document.getElementById('statIncertos').textContent = dados.incertezas.length;
 
             resultContent.textContent = formatado;
 
-            statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="number">${dados.itens.length}</div>
-                    <div class="label">${dados.tipo === 'Receita' ? 'Medicamentos' : 'Exames'}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number">${dados.frequencias.length}</div>
-                    <div class="label">Frequências</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number">${dados.incertezas.length}</div>
-                    <div class="label">Incertos</div>
-                </div>
-            `;
-
-            if (dados.incertezas && dados.incertezas.length > 0) {
-                warningBox.style.display = 'block';
+            if (dados.incertezas.length > 0) {
+                warningAlert.style.display = 'flex';
             } else {
-                warningBox.style.display = 'none';
+                warningAlert.style.display = 'none';
             }
 
-            resultSection.classList.add('active');
-            resultSection.scrollIntoView({ behavior: 'smooth' });
+            resultCard.classList.add('active');
+            resultCard.scrollIntoView({ behavior: 'smooth' });
         }
 
         function copiarResultado() {
             const texto = document.getElementById('resultContent').textContent;
             navigator.clipboard.writeText(texto).then(() => {
-                const btn = document.querySelector('.copy-btn');
+                const btn = event.target.closest('button');
                 const originalText = btn.textContent;
-                btn.textContent = '✓ Copiado!';
+                btn.textContent = '✅ Copiado!';
                 setTimeout(() => {
                     btn.textContent = originalText;
                 }, 2000);
-            }).catch(err => {
-                console.error('Erro ao copiar:', err);
             });
         }
-
-        document.getElementById('uploadArea').addEventListener('dragover', handleDragOver);
-        document.getElementById('uploadArea').addEventListener('dragleave', handleDragLeave);
-        document.getElementById('uploadArea').addEventListener('drop', handleDrop);
     </script>
 </body>
 </html>
